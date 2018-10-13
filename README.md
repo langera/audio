@@ -2,7 +2,9 @@
 
 ## bin/audiotag
 
+<pre>
 usage: audiotag [options] <target>
+   
     
     --dry-run                     only print proposed action. do not perform action.
  
@@ -12,5 +14,5 @@ usage: audiotag [options] <target>
  
  -s,--set <property=expression>   set expression to stdout
  
- \-v,--verbose                     print verbose information                  
-  
+ -v,--verbose                     print verbose information                  
+</pre>
