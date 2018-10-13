@@ -3,16 +3,16 @@
 ## bin/audiotag
 
 <pre>
-usage: audiotag [options] <target>
+usage: audiotag [options] &lt;target&gt;
    
     
     --dry-run                     only print proposed action. do not perform action.
  
- -o,--output <expression>         print expression to stdout
+ -o,--output &lt;expression&gt;         print expression to stdout
  
  -p,--print                       print all field values
  
- -s,--set <property=expression>   set expression to stdout
+ -s,--set &lt;property=expression&gt;   set expression to stdout
  
  -v,--verbose                     print verbose information                  
 </pre>
