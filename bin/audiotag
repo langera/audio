@@ -15,10 +15,10 @@ import java.util.logging.Logger
 Logger.getLogger('').handlers.each { it.setLevel(Level.SEVERE)};
 
 def cl = new CliBuilder(usage:'audiotag [options] <target>')
-cl._(longOpt: 'dry-run', 'only print proposed action')
+cl._(longOpt: 'dry-run', 'only print proposed action. do not perform action.')
 cl.v(longOpt: 'verbose', 'print verbose information')
 cl.o(longOpt:'output', args:1, argName:'expression', 'print expression to stdout')
-cl.p(longOpt:'print', 'print popular field values')
+cl.p(longOpt:'print', 'print all field values')
 cl.s(longOpt:'set', args:2, valueSeparator:'=', argName:'property=expression', 'set expression to stdout')
 
 def options = cl.parse(args)
