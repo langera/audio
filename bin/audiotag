@@ -1,0 +1,111 @@
+#!/usr/bin/env groovy
+import groovy.io.FileType
+import groovy.text.SimpleTemplateEngine
+import groovy.transform.Field
+import org.jaudiotagger.audio.AudioFile
+import org.jaudiotagger.audio.AudioFileIO
+import org.jaudiotagger.tag.FieldKey
+import org.jaudiotagger.tag.Tag
+
+@Grab(group='org', module='jaudiotagger', version='2.0.3')
+
+import java.util.logging.Level
+import java.util.logging.Logger
+
+Logger.getLogger('').handlers.each { it.setLevel(Level.SEVERE)};
+
+def cl = new CliBuilder(usage:'audiotag [options] <target>')
+cl._(longOpt: 'dry-run', 'only print proposed action')
+cl.v(longOpt: 'verbose', 'print verbose information')
+cl.o(longOpt:'output', args:1, argName:'expression', 'print expression to stdout')
+cl.p(longOpt:'print', 'print popular field values')
+cl.s(longOpt:'set', args:2, valueSeparator:'=', argName:'property=expression', 'set expression to stdout')
+
+def options = cl.parse(args)
+
+if (!options || !options.arguments() || options.arguments().empty ||
+        (!options.o && !options.s && !options.p)) {
+    cl.usage()
+    System.exit(1)
+}
+
+
+@Field Map FIELD_KEYS = FieldKey.getEnumConstants().collectEntries { [(it.name().toLowerCase()): it ] }
+@Field boolean verbose
+@Field boolean dryRun
+
+verbose = options.v
+dryRun = options.'dry-run'
+
+final File target = new File(options.arguments()[0])
+
+if (target.isDirectory()) {
+    target.eachFileRecurse(FileType.FILES) { f ->
+        audiotag(options, f)
+    }
+}
+else {
+    audiotag(options, target)
+}
+
+
+void audiotag(def options, File target) {
+    try {
+        AudioFile audioFile = AudioFileIO.read(target)
+        if (options.o) {
+            output(audioFile, asTemplate(options.o))
+        }
+        if (options.p) {
+            println "${target.canonicalPath} {"
+            printFields(audioFile)
+            println '}'
+        }
+        if (options.s) {
+            set(audioFile, options.ss[0], asTemplate(options.ss[1]))
+        }
+    } catch (Exception e) {
+        if (verbose) {
+            e.printStackTrace()
+        }
+    }
+}
+
+
+Closure asTemplate(String expression) {
+    return { tag ->
+        def engine = new SimpleTemplateEngine()
+        def template = engine.createTemplate(replaceToTag(expression)).make(['t':tag, 'keys': FIELD_KEYS])
+        return template.toString()
+    }
+}
+
+String replaceToTag(final String expression) {
+    String replaced = expression.replaceAll(/\$(\S+)/, { v -> "\${t.getFirst(keys['${v[1]}'])}"})
+    if (verbose) {
+        println "Build expression template: $expression => $replaced"
+    }
+    return replaced
+}
+
+void printFields(final AudioFile audioFile) {
+    def tag = audioFile.getTagOrCreateDefault()
+    FIELD_KEYS.sort().each { k, v ->
+        String value = tag.getFirst(v)
+        if (value) {
+            println "\t$k: $value"
+        }
+    }
+}
+
+void output(final AudioFile audioFile, final Closure<String> template) {
+    println template.call(audioFile.getTagOrCreateDefault())
+}
+
+void set(final AudioFile audioFile, final String property, final Closure<String> template) {
+    def tag = audioFile.getTagOrCreateDefault()
+    String value = template.call(tag)
+    if (dryRun || verbose) {
+        println "set ${FIELD_KEYS[property]} = $value"
+    }
+    tag.setField(FIELD_KEYS[property] as FieldKey, value)
+}
