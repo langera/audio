@@ -17,6 +17,7 @@ Logger.getLogger('').handlers.each { it.setLevel(Level.SEVERE)};
 def cl = new CliBuilder(usage:'audiotag [options] <target>')
 cl._(longOpt: 'dry-run', 'only print proposed action. do not perform action.')
 cl.v(longOpt: 'verbose', 'print verbose information')
+cl.g(longOpt:'grep', args:2, valueSeparator:'=', argName:'expression=regex', 'print target if expression evaluates to true')
 cl.o(longOpt:'output', args:1, argName:'expression', 'print expression to stdout')
 cl.p(longOpt:'print', 'print all field values')
 cl.s(longOpt:'set', args:2, valueSeparator:'=', argName:'property=expression', 'set expression to stdout')
@@ -24,7 +25,7 @@ cl.s(longOpt:'set', args:2, valueSeparator:'=', argName:'property=expression', '
 def options = cl.parse(args)
 
 if (!options || !options.arguments() || options.arguments().empty ||
-        (!options.o && !options.s && !options.p)) {
+        (!options.o && !options.s && !options.p && !options.g)) {
     cl.usage()
     System.exit(1)
 }
@@ -60,6 +61,9 @@ void audiotag(def options, File target) {
             printFields(audioFile)
             println '}'
         }
+        if (options.g) {
+            grep(audioFile, asTemplate(options.gs[0]), asTemplate(options.gs[1]))
+        }
         if (options.s) {
             set(audioFile, options.ss[0], asTemplate(options.ss[1]))
         }
@@ -94,6 +98,15 @@ void printFields(final AudioFile audioFile) {
         if (value) {
             println "\t$k: $value"
         }
+    }
+}
+
+void grep(final AudioFile audioFile, final Closure<String> template, final Closure<String> regexTemplate) {
+    def tag = audioFile.getTagOrCreateDefault()
+    String value = template.call(tag)
+    String regex = regexTemplate.call(tag)
+    if (value.matches(regex)) {
+        println audioFile.file.canonicalPath
     }
 }
 
