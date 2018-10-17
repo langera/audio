@@ -38,7 +38,9 @@ if (!options || !options.arguments() || options.arguments().empty ||
 verbose = options.v
 dryRun = options.'dry-run'
 
-final File target = new File(options.arguments()[0])
+String path = options.arguments()[0]
+path = path.replaceFirst("^~", System.getProperty("user.home"))
+final File target = new File(path)
 
 if (target.isDirectory()) {
     target.eachFileRecurse(FileType.FILES) { f ->
