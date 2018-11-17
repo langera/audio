@@ -12,7 +12,7 @@ usage: audiotag [options] &lt;target&gt;
  
  -p,--print                       print all field values
  
- -s,--set &lt;property=expression&gt;   set expression to stdout
+ -s,--set &lt;property=expression&gt;   set expression
  
  -v,--verbose                     print verbose information                  
 </pre>
